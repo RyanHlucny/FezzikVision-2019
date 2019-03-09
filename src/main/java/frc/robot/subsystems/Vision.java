@@ -31,8 +31,8 @@ public class Vision extends Subsystem {
   private static final String k_hatchTableName = "HatchCam";
   // Name of entry to listen to for target updates
   private static final String k_targetKey = "target";
-  // Name of entry to listen to for mode updates
-  private static final String k_modeKey = "visionmode";
+  // Name of entry to set camera offsets on
+  private static final String k_offsetKey = "offsets";
   // Size of the target info array returned by the raspberry pis.
   private static final int k_targetInfoArraySize = 9;
 
@@ -82,6 +82,14 @@ public class Vision extends Subsystem {
     m_cargoTable.addEntryListener(k_targetKey, (table, key, entry, value, flags) -> {
       m_currentCargoTarget = camListener(value);
     }, EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
+
+    // Add camera offsets to the network tables
+    if (!m_hatchTable.getEntry(k_offsetKey).setDoubleArray(new double[]{k_hatchCamOffset.x(), k_hatchCamOffset.y()})) {
+      DriverStation.reportError("Unable to set hatch camera offsets.", false);
+    }
+    if (!m_cargoTable.getEntry(k_offsetKey).setDoubleArray(new double[]{k_cargoCamOffset.x(), k_cargoCamOffset.y()})) {
+      DriverStation.reportError("Unable to set cargo camera offsets.", false);
+    }
   }
 
   @Override
@@ -416,14 +424,6 @@ public class Vision extends Subsystem {
       case DRIVE_MODE:
         if (m_currentState != VisionState.DRIVE_MODE) {
           m_currentState = VisionState.DRIVE_MODE;
-
-          // Send command to the raspberry pis to make them enter Driving mode
-          if (!m_hatchTable.getEntry(k_modeKey).setBoolean(false)) {
-            DriverStation.reportError("Unable to set hatch camera to Driving Mode.", false);
-          }
-          if (!m_cargoTable.getEntry(k_modeKey).setBoolean(false)) {
-            DriverStation.reportError("Unable to set cargo camera to Driving Mode.", false);
-          }
           
           m_currentHatchTarget = null;
           m_currentCargoTarget = null;
@@ -433,14 +433,6 @@ public class Vision extends Subsystem {
       case PROCESSING_MODE:
         if (m_currentState != VisionState.PROCESSING_MODE) {
           m_currentState = VisionState.PROCESSING_MODE;
-
-          // Send command to the raspberry pis to make them enter Vision Processing mode
-          if (!m_hatchTable.getEntry(k_modeKey).setBoolean(true)) {
-            DriverStation.reportError("Unable to set hatch camera to Vision Processing Mode.", false);
-          }
-          if (!m_cargoTable.getEntry(k_modeKey).setBoolean(true)) {
-            DriverStation.reportError("Unable to set cargo camera to Vision Processing Mode.", false);
-          }
         }
         break;
     }
