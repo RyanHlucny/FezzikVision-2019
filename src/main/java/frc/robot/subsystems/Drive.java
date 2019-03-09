@@ -446,6 +446,21 @@ public class Drive extends Subsystem {
           currentControlMode = DriveControlMode.PATH_FOLLOWING;
         }
         break;
+        case AUTO_STEER:
+        if (currentControlMode != DriveControlMode.AUTO_STEER) {
+          // Enable brake mode
+          setBrakeMode(true);
+          // Enable safety timeout
+          mrearLeftCIM.setSafetyEnabled(true);
+          mrearRightCIM.setSafetyEnabled(true);
+          // Set neutral deadband
+          mrearLeftCIM.configNeutralDeadband(kNeutralDeadband, 0);
+          mrearRightCIM.configNeutralDeadband(kNeutralDeadband, 0);
+
+          // Reset the last yaw angle to null (no target found)
+          m_lastAngleSetpoint = null;
+          currentControlMode = DriveControlMode.AUTO_STEER;
+        }
     }
   }
 
