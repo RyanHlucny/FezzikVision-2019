@@ -10,6 +10,12 @@ package frc.robot;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -70,6 +76,7 @@ public class Robot extends TimedRobot {
     // SmartDashboard.putData("Auto mode", m_chooser);
 
     // Instantiate camera server for usb camera on RoboRio
+    /*
     UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
     try{
       String cameraConfig = new String(Files.readAllBytes(Paths.get(Filesystem.getDeployDirectory().getAbsolutePath(), "CameraConfig.json")), "UTF-8");
@@ -77,7 +84,28 @@ public class Robot extends TimedRobot {
     }
     catch (Exception e) {
       DriverStation.reportError("Unable to load camera config from Json file.", false);
-    }
+    } */
+
+    new Thread(() -> {
+      UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+      camera.setResolution(320, 240);
+
+      CvSink cvSink = CameraServer.getInstance().getVideo();
+      CvSource outputStream = CameraServer.getInstance().putVideo("carriage-cam", 160, 120);
+
+      Mat source = new Mat();
+      Mat output = new Mat();
+
+      while (!Thread.interrupted()) {
+        cvSink.grabFrame(source);
+        // Reduce size
+        Imgproc.resize(source, output, new Size(160, 120));
+        // Convert to grayscale
+        Imgproc.cvtColor(output, output, Imgproc.COLOR_BGR2GRAY);
+        outputStream.putFrame(output);
+      }
+
+    }).start();
   }
 
   /**
