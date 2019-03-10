@@ -98,13 +98,16 @@ public class Robot extends TimedRobot {
       Mat source = new Mat();
       Mat output = new Mat();
 
+      long test;
       while (!Thread.interrupted()) {
-        cvSink.grabFrame(source);
+        test = cvSink.grabFrame(source);
         // Reduce size
-        Imgproc.resize(source, output, new Size(160, 120));
-        // Convert to grayscale
-        Imgproc.cvtColor(output, output, Imgproc.COLOR_BGR2GRAY);
-        outputStream.putFrame(output);
+        if (test != 0) {
+          Imgproc.resize(source, output, new Size(160, 120));
+          // Convert to grayscale
+          Imgproc.cvtColor(output, output, Imgproc.COLOR_BGR2GRAY);
+          outputStream.putFrame(output);
+        }
       }
 
     }).start();
