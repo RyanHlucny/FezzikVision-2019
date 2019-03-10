@@ -17,6 +17,7 @@ import org.opencv.imgproc.Imgproc;
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
+import edu.wpi.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -88,6 +89,7 @@ public class Robot extends TimedRobot {
 
     new Thread(() -> {
       UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+      camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
       camera.setResolution(320, 240);
 
       CvSink cvSink = CameraServer.getInstance().getVideo();
