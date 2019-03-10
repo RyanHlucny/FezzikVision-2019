@@ -45,6 +45,20 @@ public class Vision extends Subsystem {
 
   // Structure for holding vision target information
   public class VisionTarget {
+    public VisionTarget() {}
+    /* Copy Constructor */
+    public VisionTarget(VisionTarget target) {
+      this.centerPixel = target.centerPixel;
+      this.yaw = target.yaw;
+      this.pitch = target.pitch;
+      this.xOffset = target.xOffset;
+      this.yOffset = target.yOffset;
+      this.skewAngle = target.skewAngle;
+      this.width = target.width;
+      this.height = target.height;
+      this.latency = target.latency;
+      this.timestamp = target.timestamp;
+    }
     public double centerPixel; // Horizontal pixel coordinate of the center of the target (camera dependent)
     public double yaw; // yaw angle from the camera to the center of the target
     public double pitch; // pitch angle from the camera to the center of the target
@@ -76,11 +90,31 @@ public class Vision extends Subsystem {
 
     // Add listeners for vision targets reported by the raspberry pis
     m_hatchTable.addEntryListener(k_targetKey, (table, key, entry, value, flags) -> {
-      m_currentHatchTarget = camListener(value);
+      VisionTarget tempTarget = camListener(value);
+      // If target found and we had one before, perform position filtering
+      if (tempTarget != null && m_currentHatchTarget != null) {
+        // Only use new target if yaw angle hasn't changed too much
+        if (Math.abs(tempTarget.yaw - m_currentHatchTarget.yaw) < 6) {
+          m_currentHatchTarget = tempTarget;
+        }
+      }
+      else {
+        m_currentHatchTarget = tempTarget;
+      }
     }, EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
 
     m_cargoTable.addEntryListener(k_targetKey, (table, key, entry, value, flags) -> {
-      m_currentCargoTarget = camListener(value);
+      VisionTarget tempTarget = camListener(value);
+      // If target found and we had one before, perform position filtering
+      if (tempTarget != null && m_currentCargoTarget != null) {
+        // Only use new target if yaw angle hasn't changed too much
+        if (Math.abs(tempTarget.yaw - m_currentCargoTarget.yaw) < 6) {
+          m_currentCargoTarget = tempTarget;
+        }
+      }
+      else {
+        m_currentCargoTarget = tempTarget;
+      }
     }, EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
 
     // Add camera offsets to the network tables
