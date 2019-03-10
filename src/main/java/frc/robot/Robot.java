@@ -7,7 +7,13 @@
 
 package frc.robot;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
@@ -64,7 +70,14 @@ public class Robot extends TimedRobot {
     // SmartDashboard.putData("Auto mode", m_chooser);
 
     // Instantiate camera server for usb camera on RoboRio
-    CameraServer.getInstance().startAutomaticCapture();
+    UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+    try{
+      String cameraConfig = new String(Files.readAllBytes(Paths.get(Filesystem.getDeployDirectory().getAbsolutePath(), "CameraConfig.json")), "UTF-8");
+      camera.setConfigJson(cameraConfig);
+    }
+    catch (Exception e) {
+      DriverStation.reportError("Unable to load camera config from Json file.", false);
+    }
   }
 
   /**
