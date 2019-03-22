@@ -4,12 +4,18 @@ import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import frc.lib.team254.geometry.Pose2dWithCurvature;
 import frc.lib.team254.geometry.Rotation2d;
+import frc.lib.team254.trajectory.TrajectoryIterator;
+import frc.lib.team254.trajectory.timing.TimedState;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.util.Conversions;
 import frc.robot.RobotMap;
 import frc.robot.commands.drive.OpenLoopDrive;
+import frc.robot.planners.DriveMotionPlanner;
 import frc.team5172.lib.util.Util;
 import frc.team5172.lib.util.DriveSignal;
 
@@ -30,6 +36,7 @@ import java.lang.Math;
 public class Drive extends Subsystem {
   // Constants
   private static final int kLowGearVelocityControlSlot = 0;
+  private static final int kHighGearVelocityControlSlot = 1;
   private static final double kNeutralDeadband = 0.05; // Drive deadband when in open loop mode
 
   // Drive states
@@ -43,6 +50,9 @@ public class Drive extends Subsystem {
   private WPI_TalonSRX mrearLeftCIM = new WPI_TalonSRX(RobotMap.REAR_LEFT_MOTOR);
   private ADXRS450_Gyro mgyro = new ADXRS450_Gyro();
   private DoubleSolenoid mshiftSolenoid = new DoubleSolenoid(1, RobotMap.SHIFT_LOW_CHANNEL, RobotMap.SHIFT_HIGH_CHANNEL);
+
+  // Systems
+  private DriveMotionPlanner mMotionPlanner;
 
   // State variables
   private DriveControlMode currentControlMode = DriveControlMode.OPEN_LOOP;
@@ -80,6 +90,9 @@ public class Drive extends Subsystem {
     // Force a brake message (initially set motors to coast)
     brakeMode = true;
     setBrakeMode(false);
+
+    // Initialize motion planner
+    mMotionPlanner = new DriveMotionPlanner();
   }
 
   /**
@@ -202,6 +215,27 @@ public class Drive extends Subsystem {
     mrearLeftCIM.set(ControlMode.Velocity, signal.getLeft(), DemandType.ArbitraryFeedForward, feedforward.getLeft());
     mrearRightCIM.set(ControlMode.Velocity, signal.getRight(), DemandType.ArbitraryFeedForward, feedforward.getRight());
   }
+
+  /**
+   * Sets a trajectory for the drive to follow while in path following mode
+   * @param trajectory The trajectory that the robot should follow
+   */
+  public void setTrajectory(TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory) {
+    mMotionPlanner.reset();
+    mMotionPlanner.setTrajectory(trajectory);
+    switchDriveControlModes(DriveControlMode.PATH_FOLLOWING);
+  }
+
+  /**
+   * Returns whether or not the drive is finished with a previously loaded trajectory
+   * @return True if drive is done with the trajectory, else false
+   */
+  public boolean isDoneWithTrajectory() {
+    if (currentControlMode != DriveControlMode.PATH_FOLLOWING) {
+      return false;
+    }
+    return mMotionPlanner.isDone();
+}
 
   /**
    * Sets drive to brake or coast
@@ -378,6 +412,29 @@ public class Drive extends Subsystem {
   }
 
   /**
+   * Updates the path follower. This method should be called periodically while the robot
+   * is following a path.
+   */
+  public void  updatePathFollower() {
+    if (currentControlMode == DriveControlMode.PATH_FOLLOWING) {
+      final double now = Timer.getFPGATimestamp();
+
+      DriveMotionPlanner.Output output = mMotionPlanner.update(now, Robot.stateEstimator.getRobotState().getFieldToVehicle(now));
+
+      double left_command = Conversions.angularVelocityToEncoderVelocity(output.left_velocity, Constants.DRIVE_TICKS_PER_REV) / 10.0;
+      double right_command = Conversions.angularVelocityToEncoderVelocity(output.right_velocity, Constants.DRIVE_TICKS_PER_REV) / 10.0;
+      double left_accel = Conversions.angularVelocityToEncoderVelocity(output.left_accel, Constants.DRIVE_TICKS_PER_REV) / 10.0 / 1000.0;
+      double right_accel = Conversions.angularVelocityToEncoderVelocity(output.right_accel, Constants.DRIVE_TICKS_PER_REV) / 10.0 / 1000.0;
+      double left_d = Constants.LOW_GEAR_VELOCITY_Kd * left_accel / 1023.0;
+      double right_d = Constants.LOW_GEAR_VELOCITY_Kd * right_accel / 1023.0;
+      setVelocity(new DriveSignal(left_command, right_command), new DriveSignal(output.left_feedforward_voltage / 12.0 + left_d, output.right_feedforward_voltage / 12.0 + right_d));
+    }
+    else {
+      DriverStation.reportError("Drive is not in path following state", false);
+    }
+  }
+
+  /**
    * Reloads TalonSRX PID gains for closed loop velocity control.
    */
   public void reloadGains() {
@@ -392,6 +449,18 @@ public class Drive extends Subsystem {
     mrearRightCIM.config_kD(kLowGearVelocityControlSlot, Constants.LOW_GEAR_VELOCITY_Kd, Constants.LONG_CAN_TIMEOUT_MS);
     mrearRightCIM.config_kF(kLowGearVelocityControlSlot, Constants.LOW_GEAR_VELOCITY_Kf, Constants.LONG_CAN_TIMEOUT_MS);
     mrearRightCIM.config_IntegralZone(kLowGearVelocityControlSlot, Constants.LOW_GEAR_VELOCITY_IZONE, Constants.LONG_CAN_TIMEOUT_MS);
+
+    mrearLeftCIM.config_kP(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_Kp, Constants.LONG_CAN_TIMEOUT_MS);
+    mrearLeftCIM.config_kI(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_Ki, Constants.LONG_CAN_TIMEOUT_MS);
+    mrearLeftCIM.config_kD(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_Kd, Constants.LONG_CAN_TIMEOUT_MS);
+    mrearLeftCIM.config_kF(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_Kf, Constants.LONG_CAN_TIMEOUT_MS);
+    mrearLeftCIM.config_IntegralZone(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_IZONE, Constants.LONG_CAN_TIMEOUT_MS);
+
+    mrearRightCIM.config_kP(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_Kp, Constants.LONG_CAN_TIMEOUT_MS);
+    mrearRightCIM.config_kI(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_Ki, Constants.LONG_CAN_TIMEOUT_MS);
+    mrearRightCIM.config_kD(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_Kd, Constants.LONG_CAN_TIMEOUT_MS);
+    mrearRightCIM.config_kF(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_Kf, Constants.LONG_CAN_TIMEOUT_MS);
+    mrearRightCIM.config_IntegralZone(kHighGearVelocityControlSlot, Constants.HIGH_GEAR_VELOCITY_IZONE, Constants.LONG_CAN_TIMEOUT_MS);
   }
 
   /**
@@ -435,11 +504,11 @@ public class Drive extends Subsystem {
           // Disable safety timeout
           mrearLeftCIM.setSafetyEnabled(false);
           mrearRightCIM.setSafetyEnabled(false);
-          // Shift into low gear
-          shiftLow();
+          // Shift into high gear
+          shiftHigh();
           // Select gain profile
-          mrearLeftCIM.selectProfileSlot(kLowGearVelocityControlSlot, 0);
-          mrearRightCIM.selectProfileSlot(kLowGearVelocityControlSlot, 0);
+          mrearLeftCIM.selectProfileSlot(kHighGearVelocityControlSlot, 0);
+          mrearRightCIM.selectProfileSlot(kHighGearVelocityControlSlot, 0);
           // Zero neutral deadband
           mrearLeftCIM.configNeutralDeadband(0.0, 0);
           mrearRightCIM.configNeutralDeadband(0.0, 0);

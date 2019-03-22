@@ -9,6 +9,8 @@ package frc.robot;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
@@ -25,11 +27,15 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.lib.team254.geometry.Rotation2d;
 import frc.util.CurvatureDriveHelper;
+import frc.robot.commands.auto.FrontRocketToFeeder;
 import frc.robot.commands.drive.DriveAutoSteer;
 import frc.robot.commands.drive.OpenLoopDrive;
+import frc.robot.paths.PathCommandSelector;
+import frc.robot.paths.TrajectoryGenerator;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.RobotStateEstimator;
 import frc.robot.subsystems.Vision;
@@ -59,8 +65,16 @@ public class Robot extends TimedRobot {
   public enum GamePieceMode { CARGO, HATCH }
   public static GamePieceMode m_currentGamePieceMode = GamePieceMode.HATCH;
 
-  Command m_autonomousCommand;
-  // SendableChooser<Command> m_chooser = new SendableChooser<>();
+  // States for the sandstorm state machine
+  public enum AutoState { PATH_1, PATH_1_RETURN, PATH_2, PATH_2_RETURN, MANUAL_CONTROL }
+  private static AutoState m_currentAutoState = AutoState.PATH_1;
+  private static AutoState m_nextState = AutoState.PATH_1_RETURN;
+  private static PathCommandSelector m_pathSelector;
+
+  // Choosers for selecting robot starting position and paths to run
+  SendableChooser<Integer> m_startPositionChooser = new SendableChooser<>();
+  SendableChooser<Integer> m_path1Chooser = new SendableChooser<>();
+  SendableChooser<Integer> m_path2Chooser = new SendableChooser<>();
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -68,25 +82,30 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-
     // Reset the state estimator
     stateEstimator.reset(Timer.getFPGATimestamp(), RobotState.generateFieldToVehicle(0, 0, 0));
 
-    // m_chooser.setDefaultOption("Default Auto", new ExampleCommand());
-    // chooser.addOption("My Auto", new MyAutoCommand());
-    // SmartDashboard.putData("Auto mode", m_chooser);
+    // Set up dashboard choosers
+    m_startPositionChooser.setDefaultOption("Right lvl 1", 0);
+    m_startPositionChooser.addOption("Left lvl 1", 1);
+    m_startPositionChooser.addOption("Middle lvl 1", 2);
+    m_startPositionChooser.addOption("Right lvl 2", 3);
+    m_startPositionChooser.addOption("Left lvl 2", 4);
+    SmartDashboard.putData("Starting Position", m_startPositionChooser);
+
+    m_path1Chooser.setDefaultOption("Front rocket", 0);
+    m_path1Chooser.addOption("Back rocket", 1);
+    m_path1Chooser.addOption("Front cargoship", 2);
+    m_path1Chooser.addOption("Side cargoship", 3);
+    SmartDashboard.putData("Path 1", m_path1Chooser);
+
+    m_path2Chooser.setDefaultOption("Front rocket", 0);
+    m_path2Chooser.addOption("Back rocket", 1);
+    m_path2Chooser.addOption("Front cargoship", 2);
+    m_path2Chooser.addOption("Side cargoship", 3);
+    SmartDashboard.putData("Path 2", m_path2Chooser);
 
     // Instantiate camera server for usb camera on RoboRio
-    /*
-    UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-    try{
-      String cameraConfig = new String(Files.readAllBytes(Paths.get(Filesystem.getDeployDirectory().getAbsolutePath(), "CameraConfig.json")), "UTF-8");
-      camera.setConfigJson(cameraConfig);
-    }
-    catch (Exception e) {
-      DriverStation.reportError("Unable to load camera config from Json file.", false);
-    } */
-
     new Thread(() -> {
       UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
       camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
@@ -111,6 +130,9 @@ public class Robot extends TimedRobot {
       }
 
     }).start();
+
+    // Generate paths
+    TrajectoryGenerator.getInstance().generateTrajectories();
   }
 
   /**
@@ -157,23 +179,19 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    // m_autonomousCommand = m_chooser.getSelected();
-    m_autonomousCommand = null;
+    // Get choosable parameters from the dashboard
+    int startPosition = m_startPositionChooser.getSelected();
+    int path1 = m_path1Chooser.getSelected();
+    int path2 = m_path2Chooser.getSelected();
 
-    /*
-     * String autoSelected = SmartDashboard.getString("Auto Selector", "Default");
-     * switch(autoSelected) { case "My Auto": autonomousCommand = new
-     * MyAutoCommand(); break; case "Default Auto": default: autonomousCommand = new
-     * ExampleCommand(); break; }
-     */
+    // Construct path selector object
+    m_pathSelector = new PathCommandSelector(startPosition, path1, path2);
 
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.start();
-    }
+    // Reset the sandstorm state machine
+    m_currentAutoState = AutoState.PATH_1;
 
-    // Reset the state estimator
-    stateEstimator.reset(Timer.getFPGATimestamp(), RobotState.generateFieldToVehicle(0, 0, 0));
+    // Start the first path
+    m_pathSelector.getFirstPathCommand().start();
   }
 
   /**
@@ -181,19 +199,68 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-    teleopPeriodic();
+    // Sandstorm state machine
+    switch(m_currentAutoState) {
+      case MANUAL_CONTROL:
+        teleopPeriodic();
+        // If driver presses resume button, move to next state
+        if (m_oi.getSteeringJoystick().getRawButtonPressed(2)) {
+          m_currentAutoState = m_nextState;
+          if (m_nextState == AutoState.PATH_1) {
+            m_pathSelector.getFirstPathCommand().start();
+          }
+          else if (m_nextState == AutoState.PATH_1_RETURN) {
+            m_pathSelector.getSecondPathCommand().start();
+          }
+          else if (m_nextState == AutoState.PATH_2) {
+            m_pathSelector.getThirdPathCommand().start();
+          }
+          else {
+            m_pathSelector.getFourthPathCommand().start();
+          }
+        }
+        break;
+      
+      case PATH_1:
+        Scheduler.getInstance().run();
+        // Return to manual control when driver presses quick turn button
+        if (m_oi.getSteeringJoystick().getRawButtonPressed(1)) {
+          m_currentAutoState = AutoState.MANUAL_CONTROL;
+          m_nextState = AutoState.PATH_1_RETURN;
+        }
+        break;
+
+      case PATH_1_RETURN:
+        Scheduler.getInstance().run();
+        // Return to manual control when driver presses quick turn button
+        if (m_oi.getSteeringJoystick().getRawButtonPressed(1)) {
+          m_currentAutoState = AutoState.MANUAL_CONTROL;
+          m_nextState = AutoState.PATH_2;
+        }
+        break;
+
+      case PATH_2:
+        Scheduler.getInstance().run();
+        // Return to manual control when driver presses quick turn button
+        if (m_oi.getSteeringJoystick().getRawButtonPressed(1)) {
+          m_currentAutoState = AutoState.MANUAL_CONTROL;
+          m_nextState = AutoState.PATH_2_RETURN;
+        }
+        break;
+
+      case PATH_2_RETURN:
+        Scheduler.getInstance().run();
+        // Return to manual control when driver presses quick turn button
+        if (m_oi.getSteeringJoystick().getRawButtonPressed(1)) {
+          m_currentAutoState = AutoState.MANUAL_CONTROL;
+          m_nextState = AutoState.PATH_2_RETURN;
+        }
+        break;
+    }
   }
 
   @Override
   public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
-
     // Reset the state estimator
     stateEstimator.reset(Timer.getFPGATimestamp(), RobotState.generateFieldToVehicle(0, 0, 0));
   }

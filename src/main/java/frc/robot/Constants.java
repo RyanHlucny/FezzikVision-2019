@@ -35,6 +35,13 @@ public class Constants {
     public static final double LOW_GEAR_VELOCITY_Kf = 0.0;
     public static final int LOW_GEAR_VELOCITY_IZONE = 0;
 
+    // PID gains for drive velocity loop (high gear)
+    public static final double HIGH_GEAR_VELOCITY_Kp = 0.9;
+    public static final double HIGH_GEAR_VELOCITY_Ki = 0.0;
+    public static final double HIGH_GEAR_VELOCITY_Kd = 5.0;
+    public static final double HIGH_GEAR_VELOCITY_Kf = 0.0;
+    public static final int HIGH_GEAR_VELOCITY_IZONE = 0;
+
     // PID gains for drive auto-steer (low gear)
     public static final double AUTO_STEER_Kp = 0.02;
 
