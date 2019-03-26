@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import frc.robot.Constants;
+import frc.lib.team254.geometry.Rotation2d;
 import frc.lib.team254.geometry.Pose2d;
 import frc.lib.team254.geometry.Pose2dWithCurvature;
 import frc.lib.team254.physics.DCMotorTransmission;
@@ -106,27 +107,45 @@ public class DriveMotionPlanner {
             final List<TimingConstraint<Pose2dWithCurvature>> constraints,
             double start_vel,
             double end_vel,
-            double max_vel,
-            double max_accel,
+            double max_vel,  // inches/s
+            double max_accel,  // inches/s^2
             double max_voltage,
-            boolean reverse) {
+            boolean reversed) {
+        List<Pose2d> waypoints_maybe_flipped = waypoints;
+        final Pose2d flip = Pose2d.fromRotation(new Rotation2d(-1, 0, false));
+        // TODO re-architect the spline generator to support reverse.
+        if (reversed) {
+            waypoints_maybe_flipped = new ArrayList<>(waypoints.size());
+            for (int i = 0; i < waypoints.size(); ++i) {
+                waypoints_maybe_flipped.add(waypoints.get(i).transformBy(flip));
+            }
+        }
 
         // Create a trajectory from splines.
-        Trajectory<Pose2dWithCurvature> trajectory = TrajectoryUtil.trajectoryFromSplineWaypoints(waypoints, kMaxDx, kMaxDy, kMaxDTheta);
+        Trajectory<Pose2dWithCurvature> trajectory = TrajectoryUtil.trajectoryFromSplineWaypoints(
+                waypoints_maybe_flipped, kMaxDx, kMaxDy, kMaxDTheta);
 
-        // Create the constraint that the robot must be able to traverse the trajectory without applying more
-        // than the maximum voltage.
-        final DifferentialDriveDynamicsConstraint<Pose2dWithCurvature> drive_constraints = new DifferentialDriveDynamicsConstraint<>(mModel, max_voltage);
+        if (reversed) {
+            List<Pose2dWithCurvature> flipped = new ArrayList<>(trajectory.length());
+            for (int i = 0; i < trajectory.length(); ++i) {
+                flipped.add(new Pose2dWithCurvature(trajectory.getState(i).getPose().transformBy(flip), -trajectory
+                        .getState(i).getCurvature(), trajectory.getState(i).getDCurvatureDs()));
+            }
+            trajectory = new Trajectory<>(flipped);
+        }
+        // Create the constraint that the robot must be able to traverse the trajectory without ever applying more
+        // than the specified voltage.
+        final DifferentialDriveDynamicsConstraint<Pose2dWithCurvature> drive_constraints = new
+                DifferentialDriveDynamicsConstraint<>(mModel, max_voltage);
         List<TimingConstraint<Pose2dWithCurvature>> all_constraints = new ArrayList<>();
         all_constraints.add(drive_constraints);
         if (constraints != null) {
             all_constraints.addAll(constraints);
         }
-        
-        // Generate the timed trajectory
-        Trajectory<TimedState<Pose2dWithCurvature>> timed_trajectory = TimingUtil.timeParameterizeTrajectory(
-            reverse, new DistanceView<>(trajectory), kMaxDx, all_constraints, start_vel, end_vel, max_vel, max_accel);
-        
+        // Generate the timed trajectory.
+        Trajectory<TimedState<Pose2dWithCurvature>> timed_trajectory = TimingUtil.timeParameterizeTrajectory
+                (reversed, new
+                        DistanceView<>(trajectory), kMaxDx, all_constraints, start_vel, end_vel, max_vel, max_accel);
         return timed_trajectory;
     }
 

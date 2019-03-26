@@ -18,8 +18,8 @@ import frc.robot.Robot;
 import frc.robot.paths.TrajectoryGenerator;
 import frc.lib.team254.geometry.Pose2d;
 
-public class Hab1ToFrontRocket extends Command {
-  public Hab1ToFrontRocket() {
+public class FrontCargoShipToRightFeeder extends Command {
+  public FrontCargoShipToRightFeeder() {
     requires(Robot.drive);
   }
 
@@ -27,9 +27,9 @@ public class Hab1ToFrontRocket extends Command {
   @Override
   protected void initialize() {
     // Reset robot state
-    Robot.stateEstimator.reset(Timer.getFPGATimestamp(), new Pose2d(67, -43, Rotation2d.fromDegrees(180)));
+    Robot.stateEstimator.reset(Timer.getFPGATimestamp(), new Pose2d(202, -10, Rotation2d.fromDegrees(180)));
     // Get generated trajectory
-    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontRocket.trajectory));
+    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().frontCargoShipToRightFeeder.trajectory));
     // Set the drive to follow the trajectory
     Robot.drive.setTrajectory(trajectory);
   }

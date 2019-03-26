@@ -45,6 +45,9 @@ public class Constants {
     // PID gains for drive auto-steer (low gear)
     public static final double AUTO_STEER_Kp = 0.02;
 
+    // PID gains for drive turn-by-angle
+    public static final double TURN_BY_ANGLE_Kp = 0.05; //0.001 isn't enough to move
+
     /* ROBOT PHYSICAL CONSTANTS */
     
     // Wheels

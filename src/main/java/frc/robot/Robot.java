@@ -7,22 +7,6 @@
 
 package frc.robot;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opencv.core.Mat;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
-
-import edu.wpi.cscore.CvSink;
-import edu.wpi.cscore.CvSource;
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.cscore.VideoSource.ConnectionStrategy;
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
@@ -31,12 +15,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.lib.team254.geometry.Rotation2d;
 import frc.util.CurvatureDriveHelper;
-import frc.robot.commands.auto.FrontRocketToFeeder;
 import frc.robot.commands.drive.DriveAutoSteer;
 import frc.robot.commands.drive.OpenLoopDrive;
 import frc.robot.paths.PathCommandSelector;
 import frc.robot.paths.TrajectoryGenerator;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.PlateGrabber;
 import frc.robot.subsystems.RobotStateEstimator;
 import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.Vision.VisionState;
@@ -52,6 +36,7 @@ import frc.team5172.lib.util.DriveSignal;
 public class Robot extends TimedRobot {
   public static Drive drive = new Drive();
   public static Vision vision = new Vision();
+  public static PlateGrabber plategrabber = new PlateGrabber();
 
   // This must be instantiated after the drive subsystem
   public static RobotStateEstimator stateEstimator = new RobotStateEstimator();
@@ -105,6 +90,7 @@ public class Robot extends TimedRobot {
     m_path2Chooser.addOption("Side cargoship", 3);
     SmartDashboard.putData("Path 2", m_path2Chooser);
 
+    /*
     // Instantiate camera server for usb camera on RoboRio
     new Thread(() -> {
       UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
@@ -129,7 +115,7 @@ public class Robot extends TimedRobot {
         }
       }
 
-    }).start();
+    }).start(); */
 
     // Generate paths
     TrajectoryGenerator.getInstance().generateTrajectories();
@@ -149,6 +135,8 @@ public class Robot extends TimedRobot {
     // Shows current vision mode on the smartdashboard.
     SmartDashboard.putBoolean("Vision Processing Enabled", vision.getVisionMode() == VisionState.PROCESSING_MODE);
     SmartDashboard.putBoolean("Hatch Mode", getGamePiecePursuit() == GamePieceMode.HATCH);
+    SmartDashboard.putNumber("Right distance", drive.getRightLinearPosition());
+    SmartDashboard.putNumber("Left Distance", drive.getLeftLinearPosition());
   }
 
   /**
@@ -190,6 +178,9 @@ public class Robot extends TimedRobot {
     // Reset the sandstorm state machine
     m_currentAutoState = AutoState.PATH_1;
 
+    // Clear cancel button press
+    m_oi.getSteeringJoystick().getRawButtonPressed(1);
+
     // Start the first path
     m_pathSelector.getFirstPathCommand().start();
   }
@@ -200,12 +191,14 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     // Sandstorm state machine
-    switch(m_currentAutoState) {
+    switch (m_currentAutoState) {
       case MANUAL_CONTROL:
         teleopPeriodic();
         // If driver presses resume button, move to next state
         if (m_oi.getSteeringJoystick().getRawButtonPressed(2)) {
           m_currentAutoState = m_nextState;
+          // Clear cancel button press
+          m_oi.getSteeringJoystick().getRawButtonPressed(1);
           if (m_nextState == AutoState.PATH_1) {
             m_pathSelector.getFirstPathCommand().start();
           }
@@ -274,7 +267,7 @@ public class Robot extends TimedRobot {
     stateEstimator.update(Timer.getFPGATimestamp());
 
     // Open loop curvature drive
-    DriveSignal signal = curvatureDrive.curvatureDrive(m_oi.getThrottleJoystick().getRawAxis(1), m_oi.getSteeringJoystick().getRawAxis(0),
+    DriveSignal signal = curvatureDrive.curvatureDrive(-m_oi.getThrottleJoystick().getRawAxis(1), m_oi.getSteeringJoystick().getRawAxis(0),
         m_oi.getSteeringJoystick().getRawButton(1), drive.getCurrentGear() == Drive.DriveGearState.HIGH);
     Command driveCommand;
     // Check to see if we're in vision steering mode

@@ -1,8 +1,12 @@
 package frc.robot;
+
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
 import frc.robot.commands.drive.DriveShiftDown;
 import frc.robot.commands.drive.DriveShiftUp;
+import frc.robot.commands.plategrabber.CloseClaw;
+import frc.robot.commands.plategrabber.FeederStationPreset;
+import frc.robot.commands.plategrabber.OpenClaw;
 import frc.robot.commands.robot.SetGamePiecePursuitBall;
 import frc.robot.commands.robot.SetGamePiecePursuitPlate;
 import frc.robot.commands.vision.VisionHold;
@@ -22,6 +26,11 @@ public class OI {
   private Joystick msteeringJoy = new Joystick(1);
   private static final int cargoMode = 4;
   private static final int hatchMode = 3;
+  // Operator joystick
+  private Joystick moperatorJoy = new Joystick(2);
+  private static final int closeClaw = 2;
+  private static final int openClaw = 3;
+  private static final int feederPreset = 8;
 
   public OI() {
     // Manual shifting
@@ -30,6 +39,13 @@ public class OI {
     new JoystickButton(mthrottleJoy, autoSteerButton).whileHeld(new VisionHold());
     new JoystickButton(msteeringJoy, cargoMode).whenPressed(new SetGamePiecePursuitBall());
     new JoystickButton(msteeringJoy, hatchMode).whenPressed(new SetGamePiecePursuitPlate());
+    new JoystickButton(msteeringJoy, hatchMode).whenPressed(new SetGamePiecePursuitPlate());
+
+    new JoystickButton(moperatorJoy, closeClaw).whenPressed(new CloseClaw(true));
+    new JoystickButton(moperatorJoy, openClaw).whenPressed(new OpenClaw(true));
+    new JoystickButton(moperatorJoy, feederPreset).whenPressed(new FeederStationPreset());
+    
+    
   }
 
 

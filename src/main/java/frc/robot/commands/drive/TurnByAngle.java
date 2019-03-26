@@ -5,48 +5,52 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package frc.robot.commands.auto;
+package frc.robot.commands.drive;
 
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
-import frc.lib.team254.geometry.Pose2dWithCurvature;
 import frc.lib.team254.geometry.Rotation2d;
-import frc.lib.team254.trajectory.TimedView;
-import frc.lib.team254.trajectory.TrajectoryIterator;
-import frc.lib.team254.trajectory.timing.TimedState;
+import frc.util.CurvatureDriveHelper;
+import frc.util.Debounce;
+import frc.util.Util;
+import frc.robot.Constants;
 import frc.robot.Robot;
-import frc.robot.paths.TrajectoryGenerator;
-import frc.lib.team254.geometry.Pose2d;
+import frc.team5172.lib.util.DriveSignal;
 
-public class Hab1ToFrontRocket extends Command {
-  public Hab1ToFrontRocket() {
+public class TurnByAngle extends Command {
+  private Rotation2d desiredAngle;
+  private Rotation2d finalAngle;
+  private Rotation2d angleError;
+
+  // Curvature Drive Helper Instantiation
+  private CurvatureDriveHelper curvatureDrive = new CurvatureDriveHelper();
+  private Debounce debounce;
+
+  public TurnByAngle(double desiredAngleDegrees) {
     requires(Robot.drive);
+    this.desiredAngle = Rotation2d.fromDegrees(desiredAngleDegrees);
   }
 
   // Called just before this Command runs the first time
   @Override
   protected void initialize() {
-    // Reset robot state
-    Robot.stateEstimator.reset(Timer.getFPGATimestamp(), new Pose2d(67, -43, Rotation2d.fromDegrees(180)));
-    // Get generated trajectory
-    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontRocket.trajectory));
-    // Set the drive to follow the trajectory
-    Robot.drive.setTrajectory(trajectory);
+    this.finalAngle = Robot.drive.getHeading().inverse().rotateBy(desiredAngle);
+    debounce = new Debounce(5);
   }
 
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
-    // Update the robot state
-    Robot.stateEstimator.update(Timer.getFPGATimestamp());
-    // Update the path follower
-    Robot.drive.updatePathFollower();
+    this.angleError = Robot.drive.getHeading().rotateBy(finalAngle);
+    double output = angleError.getDegrees() * Constants.TURN_BY_ANGLE_Kp;
+    output = Util.limit(output, 1);
+    DriveSignal signal = curvatureDrive.curvatureDrive(0, output, true, false);
+    Robot.drive.driveOpenLoop(signal, false);
   }
 
   // Make this return true when this Command no longer needs to run execute()
   @Override
   protected boolean isFinished() {
-    return Robot.drive.isDoneWithTrajectory();
+    return debounce.debounce(Math.abs(this.angleError.getDegrees()) <= 2, true);
   }
 
   // Called once after isFinished returns true

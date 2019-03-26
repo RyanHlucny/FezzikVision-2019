@@ -59,6 +59,7 @@ public class Drive extends Subsystem {
   private DriveGearState currentGear = DriveGearState.LOW;
   private boolean brakeMode = false;
   private double gyroOffset = 0.0;
+  private boolean followPathBackwards = false;
   // Variables for the auto-steer state machine
   private Rotation2d m_lastAngleSetpoint = null;
 
@@ -221,6 +222,16 @@ public class Drive extends Subsystem {
    * @param trajectory The trajectory that the robot should follow
    */
   public void setTrajectory(TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory) {
+    setTrajectory(trajectory, false);
+  }
+
+  /**
+   * Sets a trajectory for the drive to follow while in path following mode
+   * @param trajectory The trajectory that the robot should follow
+   * @param followBackwards Whether the robot should drive backwards or not
+   */
+  public void setTrajectory(TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory, boolean followBackwards) {
+    followPathBackwards = followBackwards;
     mMotionPlanner.reset();
     mMotionPlanner.setTrajectory(trajectory);
     switchDriveControlModes(DriveControlMode.PATH_FOLLOWING);
@@ -487,7 +498,7 @@ public class Drive extends Subsystem {
       case OPEN_LOOP:
         if (currentControlMode != DriveControlMode.OPEN_LOOP) {
           // Disable brake mode
-          setBrakeMode(false);
+          setBrakeMode(true);
           // Enable safety timeout
           mrearLeftCIM.setSafetyEnabled(true);
           mrearRightCIM.setSafetyEnabled(true);
@@ -504,8 +515,8 @@ public class Drive extends Subsystem {
           // Disable safety timeout
           mrearLeftCIM.setSafetyEnabled(false);
           mrearRightCIM.setSafetyEnabled(false);
-          // Shift into high gear
-          shiftHigh();
+          // Shift into low gear
+          shiftLow();
           // Select gain profile
           mrearLeftCIM.selectProfileSlot(kHighGearVelocityControlSlot, 0);
           mrearRightCIM.selectProfileSlot(kHighGearVelocityControlSlot, 0);

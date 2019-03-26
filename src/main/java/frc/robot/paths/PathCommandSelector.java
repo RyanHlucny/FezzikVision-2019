@@ -1,8 +1,17 @@
 package frc.robot.paths;
 
 import edu.wpi.first.wpilibj.command.Command;
+import frc.robot.commands.auto.FrontCargoShipToRightFeeder;
 import frc.robot.commands.auto.FrontRocketToFeeder;
+import frc.robot.commands.auto.Hab1MiddleToFrontCargoShip;
+import frc.robot.commands.auto.Hab1ToBackRocket;
+import frc.robot.commands.auto.Hab1ToFrontCargoShip;
 import frc.robot.commands.auto.Hab1ToFrontRocket;
+import frc.robot.commands.auto.RightFeederToBackRocket;
+import frc.robot.commands.auto.RightFeederToFrontRocket;
+import frc.robot.commands.auto.commandgroups.BackRocketToFeederWithTurn;
+import frc.robot.commands.auto.commandgroups.FrontRocketToFeederWithTurn;
+import frc.robot.commands.auto.commandgroups.RightFeederToFrontRocketWithTurn;
 
 /**
  * This class selects the appropriate path following command for each phase of
@@ -44,13 +53,17 @@ public class PathCommandSelector {
         if (dest1 == 0) {
           // front rocket
           m_firstCommand = new Hab1ToFrontRocket();
-          m_secondCommand = new FrontRocketToFeeder();
+          m_secondCommand = new FrontRocketToFeederWithTurn();
         }
         else if (dest1 == 1) {
           // back rocket
+          m_firstCommand = new Hab1ToBackRocket();
+          m_secondCommand = new BackRocketToFeederWithTurn();
         }
         else if (dest1 == 2) {
           // front cargo ship
+          m_firstCommand = new Hab1ToFrontCargoShip();
+          m_secondCommand = new FrontCargoShipToRightFeeder();
         }
         else {
           // side cargo ship
@@ -59,9 +72,11 @@ public class PathCommandSelector {
         // Destination2:
         if (dest2 == 0) {
           // front rocket
+          m_thirdCommand = new RightFeederToFrontRocketWithTurn();
         }
         else if (dest2 == 1) {
           // back rocket
+          m_thirdCommand = new RightFeederToBackRocket();
         }
         else if (dest2 == 2) {
           // front cargo ship
@@ -113,6 +128,8 @@ public class PathCommandSelector {
         }
         else if (dest1 == 2) {
           // front cargo ship
+          m_firstCommand = new Hab1MiddleToFrontCargoShip();
+          m_secondCommand = new FrontCargoShipToRightFeeder();
         }
         else {
           // side cargo ship
@@ -121,6 +138,8 @@ public class PathCommandSelector {
         // Destination2:
         if (dest2 == 0) {
           // front rocket
+          m_thirdCommand = new RightFeederToFrontRocket();
+          m_fourthCommand = new FrontRocketToFeeder();
         }
         else if (dest2 == 1) {
           // back rocket
