@@ -29,7 +29,7 @@ public class FrontCargoShipToRightFeeder extends Command {
     // Reset robot state
     Robot.stateEstimator.reset(Timer.getFPGATimestamp(), new Pose2d(202, -10, Rotation2d.fromDegrees(180)));
     // Get generated trajectory
-    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().frontCargoShipToRightFeeder.trajectory));
+    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().frontCargoShipToRightFeeder.right));
     // Set the drive to follow the trajectory
     Robot.drive.setTrajectory(trajectory);
   }

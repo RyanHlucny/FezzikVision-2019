@@ -9,27 +9,49 @@ package frc.robot.commands.auto;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
+import frc.lib.team254.geometry.Pose2d;
 import frc.lib.team254.geometry.Pose2dWithCurvature;
-import frc.lib.team254.trajectory.TimedView;
 import frc.lib.team254.trajectory.TrajectoryIterator;
 import frc.lib.team254.trajectory.timing.TimedState;
 import frc.robot.Robot;
-import frc.robot.paths.TrajectoryGenerator;
 
-public class RightFeederToFrontRocket extends Command {
-  public RightFeederToFrontRocket() {
+public class DriveTrajectory extends Command {
+  private final TrajectoryIterator<TimedState<Pose2dWithCurvature>> m_trajectory;
+  private final Pose2d m_startingPose;
+
+
+  /**
+   * Convenience constructor for creating command that doesn't reset the robot's state estimator. This
+   * means that the robot will use its current estimated position as the starting point for the path.
+   * @param trajectory the trajectory this command should make the robot follow
+   */
+  public DriveTrajectory(TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory) {
     requires(Robot.drive);
+    m_startingPose = null;
+    m_trajectory = trajectory;
+  }
+  
+  /**
+   * Default constructor
+   * @param startingPose the robot's starting pose. Note that if you do set the starting pose yourself, 
+   * @param trajectory the trajectory this command should make the robot follow
+   * the robot's state estimator will be reset and the reference frame will probably change.
+   */
+  public DriveTrajectory(Pose2d startingPose, TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory) {
+    requires(Robot.drive);
+    m_startingPose = startingPose;
+    m_trajectory = trajectory;
   }
 
   // Called just before this Command runs the first time
   @Override
   protected void initialize() {
-    // Reset robot state
-    Robot.stateEstimator.reset(Timer.getFPGATimestamp(), TrajectoryGenerator.kfeederStationGrab);
-    // Get generated trajectory
-    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().rightFeederToFrontRocket.right));
+    // Reset robot state if desired
+    if (m_startingPose != null) {
+      Robot.stateEstimator.reset(Timer.getFPGATimestamp(), m_startingPose);
+    }
     // Set the drive to follow the trajectory
-    Robot.drive.setTrajectory(trajectory);
+    Robot.drive.setTrajectory(m_trajectory);
   }
 
   // Called repeatedly when this Command is scheduled to run

@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.command.Command;
 import frc.lib.team254.geometry.Pose2d;
 import frc.lib.team254.geometry.Rotation2d;
 import frc.robot.commands.auto.AutoPathCommand;
+import frc.robot.commands.auto.DriveTrajectory;
 import frc.robot.commands.auto.commandgroups.BackRocketToFeederWithTurn;
 import frc.robot.commands.auto.commandgroups.FrontCargoShipToRightFeederWithTurn;
 import frc.robot.commands.auto.commandgroups.FrontRocketToFeederWithTurn;
@@ -27,6 +28,8 @@ public class PathCommandSelector {
   private Command m_secondCommand = null;
   private Command m_thirdCommand = null;
   private Command m_fourthCommand = null;
+
+  private static final TrajectoryGenerator mTrajectoryGenerator = TrajectoryGenerator.getInstance();
 
   /**
    * Public constructor
@@ -55,7 +58,7 @@ public class PathCommandSelector {
         // Destination 1:
         if (dest1 == 0) {
           // front rocket
-          m_firstCommand = new AutoPathCommand(new Pose2d(67, -43, Rotation2d.fromDegrees(180)), TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontRocket); // Hab1ToFrontRocket
+          m_firstCommand = new DriveTrajectory(new Pose2d(67, -43, Rotation2d.fromDegrees(180)), ); // Hab1ToFrontRocket
           m_secondCommand = new FrontRocketToFeederWithTurn();
         }
         else if (dest1 == 1) {
