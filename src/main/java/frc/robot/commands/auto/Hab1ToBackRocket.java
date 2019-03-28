@@ -29,7 +29,7 @@ public class Hab1ToBackRocket extends Command {
     // Reset robot state
     Robot.stateEstimator.reset(Timer.getFPGATimestamp(), new Pose2d(67, -43, Rotation2d.fromDegrees(0)));
     // Get generated trajectory
-    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToBackRocket.trajectory));
+    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToBackRocket.right));
     // Set the drive to follow the trajectory
     Robot.drive.setTrajectory(trajectory);
   }

@@ -9,6 +9,7 @@ import frc.lib.team254.geometry.Pose2d;
 import frc.lib.team254.geometry.Pose2dWithCurvature;
 import frc.lib.team254.geometry.Rotation2d;
 import frc.lib.team254.trajectory.Trajectory;
+import frc.lib.team254.trajectory.TrajectoryUtil;
 import frc.lib.team254.trajectory.timing.CentripetalAccelerationConstraint;
 import frc.lib.team254.trajectory.timing.TimedState;
 import frc.lib.team254.trajectory.timing.TimingConstraint;
@@ -115,65 +116,67 @@ public class TrajectoryGenerator {
     public static final Pose2d ksideCargoShipMiddlePlacement = new Pose2d(281.0, -50.0, Rotation2d.fromDegrees(270.0));
 
     public class TrajectorySet {
-        public class TrajectoryInstance {
-            public final Trajectory<TimedState<Pose2dWithCurvature>> trajectory;
+        public class MirroredTrajectory {
+            public final Trajectory<TimedState<Pose2dWithCurvature>> right; 
+            public final Trajectory<TimedState<Pose2dWithCurvature>> left;
 
-            public TrajectoryInstance(Trajectory<TimedState<Pose2dWithCurvature>> trajectory) {
-                this.trajectory = trajectory;
+            public MirroredTrajectory(Trajectory<TimedState<Pose2dWithCurvature>> right) {
+                this.right = right;
+                this.left = TrajectoryUtil.mirrorTimed(right);
             }
         }
 
         // Right lvl 1 trajectories
-        public final TrajectoryInstance lvl1ToFrontRocket;
-        public final TrajectoryInstance lvl1ToBackRocket;
-        public final TrajectoryInstance lvl1ToFrontCargoship;
-        public final TrajectoryInstance lvl1ToSideCargoshipLeft; // from right lvl 1 to left side cargoship
-        public final TrajectoryInstance lvl1ToSideCargoshipMiddle; // from right lvl 1 to middle side cargoship
+        public final MirroredTrajectory lvl1ToFrontRocket;
+        public final MirroredTrajectory lvl1ToBackRocket;
+        public final MirroredTrajectory lvl1ToFrontCargoship;
+        public final MirroredTrajectory lvl1ToSideCargoshipLeft; // from right lvl 1 to left side cargoship
+        public final MirroredTrajectory lvl1ToSideCargoshipMiddle; // from right lvl 1 to middle side cargoship
         // Right lvl 2 trajectories
-        public final TrajectoryInstance lvl2ToFrontRocket;
-        public final TrajectoryInstance lvl2ToBackRocket;
-        public final TrajectoryInstance lvl2ToFrontCargoShip;
-        public final TrajectoryInstance lvl2ToSideCargoshipLeft;
-        public final TrajectoryInstance lvl2ToSideCargoshipMiddle; 
+        public final MirroredTrajectory lvl2ToFrontRocket;
+        public final MirroredTrajectory lvl2ToBackRocket;
+        public final MirroredTrajectory lvl2ToFrontCargoShip;
+        public final MirroredTrajectory lvl2ToSideCargoshipLeft;
+        public final MirroredTrajectory lvl2ToSideCargoshipMiddle; 
         // Middle lvl 1 trajectories
-        public final TrajectoryInstance midToFrontCargoship;
+        public final MirroredTrajectory midToFrontCargoship;
         // Field element to right feeder trajectories
-        public final TrajectoryInstance frontRocketToFeeder; // back up from front rocket
-        public final TrajectoryInstance backRocketToFeeder; // back up from back rocket
-        public final TrajectoryInstance frontCargoShipToRightFeeder; // back from front right cargoship to right feeder station
-        public final TrajectoryInstance sideCargoShipToRightFeeder; // back from middle side cargship to right feeder station
+        public final MirroredTrajectory frontRocketToFeeder; // back up from front rocket
+        public final MirroredTrajectory backRocketToFeeder; // back up from back rocket
+        public final MirroredTrajectory frontCargoShipToRightFeeder; // back from front right cargoship to right feeder station
+        public final MirroredTrajectory sideCargoShipToRightFeeder; // back from middle side cargship to right feeder station
         // Right feeder to field element trajectories
-        public final TrajectoryInstance rightFeederToFrontRocket;
-        public final TrajectoryInstance rightFeederToBackRocket;
-        public final TrajectoryInstance rightFeederToFrontCargoship;
-        public final TrajectoryInstance rightFeederToSideCargoshipLeft; // right feeder to left side cargoship
-        public final TrajectoryInstance rightFeederToSideCargoshipMiddle; // right feeder to middle side cargoship
+        public final MirroredTrajectory rightFeederToFrontRocket;
+        public final MirroredTrajectory rightFeederToBackRocket;
+        public final MirroredTrajectory rightFeederToFrontCargoship;
+        public final MirroredTrajectory rightFeederToSideCargoshipLeft; // right feeder to left side cargoship
+        public final MirroredTrajectory rightFeederToSideCargoshipMiddle; // right feeder to middle side cargoship
         // Misc. trajectories
-        public final TrajectoryInstance backRocketBackup;
+        public final MirroredTrajectory backRocketBackup;
         
 
         private TrajectorySet() {
-            lvl1ToFrontRocket = new TrajectoryInstance(getLvl1ToFrontRocket());
-            frontRocketToFeeder = new TrajectoryInstance(getfrontRocketToFeeder());
-            midToFrontCargoship = new TrajectoryInstance(getMiddleHabToFrontCargoShip());
-            frontCargoShipToRightFeeder = new TrajectoryInstance(getFrontCargoshipToRightFeeder());
-            rightFeederToFrontRocket = new TrajectoryInstance(getRightFeederToFrontRocket());
-            rightFeederToBackRocket = new TrajectoryInstance(getRightFeederToBackRocket());
-            lvl1ToBackRocket = new TrajectoryInstance(getLvl1ToBackRocket());
-            backRocketToFeeder = new TrajectoryInstance(getbackRocketToFeeder());
-            lvl1ToFrontCargoship = new TrajectoryInstance(getlvl1ToFrontCargoship());
-            rightFeederToFrontCargoship = new TrajectoryInstance(getRightFeederToFrontCargoship());
-            lvl1ToSideCargoshipLeft = new TrajectoryInstance(getLvl1ToSideCargoshipLeft());
-            lvl1ToSideCargoshipMiddle = new TrajectoryInstance(getLvl1ToSideCargoshipMiddle());
-            sideCargoShipToRightFeeder = new TrajectoryInstance(getSideCargoshipToRightFeeder());
-            rightFeederToSideCargoshipLeft = new TrajectoryInstance(getRightFeederToSideCargoshipLeft());
-            rightFeederToSideCargoshipMiddle = new TrajectoryInstance(getRightFeederToSideCargoshipMiddle());
-            lvl2ToSideCargoshipLeft = new TrajectoryInstance(getLvl2ToSideCargoshipLeft());
-            lvl2ToSideCargoshipMiddle = new TrajectoryInstance(getLvl2ToSideCargoshipMiddle());
-            lvl2ToFrontCargoShip = new TrajectoryInstance(getlvl2ToFrontCargoship());
-            lvl2ToFrontRocket = new TrajectoryInstance(getLvl2ToFrontRocket());
-            lvl2ToBackRocket = new TrajectoryInstance(getLvl2ToBackRocket()); 
-            backRocketBackup = new TrajectoryInstance(getBackRocketBackup());
+            lvl1ToFrontRocket = new MirroredTrajectory(getLvl1ToFrontRocket());
+            frontRocketToFeeder = new MirroredTrajectory(getfrontRocketToFeeder());
+            midToFrontCargoship = new MirroredTrajectory(getMiddleHabToFrontCargoShip());
+            frontCargoShipToRightFeeder = new MirroredTrajectory(getFrontCargoshipToRightFeeder());
+            rightFeederToFrontRocket = new MirroredTrajectory(getRightFeederToFrontRocket());
+            rightFeederToBackRocket = new MirroredTrajectory(getRightFeederToBackRocket());
+            lvl1ToBackRocket = new MirroredTrajectory(getLvl1ToBackRocket());
+            backRocketToFeeder = new MirroredTrajectory(getbackRocketToFeeder());
+            lvl1ToFrontCargoship = new MirroredTrajectory(getlvl1ToFrontCargoship());
+            rightFeederToFrontCargoship = new MirroredTrajectory(getRightFeederToFrontCargoship());
+            lvl1ToSideCargoshipLeft = new MirroredTrajectory(getLvl1ToSideCargoshipLeft());
+            lvl1ToSideCargoshipMiddle = new MirroredTrajectory(getLvl1ToSideCargoshipMiddle());
+            sideCargoShipToRightFeeder = new MirroredTrajectory(getSideCargoshipToRightFeeder());
+            rightFeederToSideCargoshipLeft = new MirroredTrajectory(getRightFeederToSideCargoshipLeft());
+            rightFeederToSideCargoshipMiddle = new MirroredTrajectory(getRightFeederToSideCargoshipMiddle());
+            lvl2ToSideCargoshipLeft = new MirroredTrajectory(getLvl2ToSideCargoshipLeft());
+            lvl2ToSideCargoshipMiddle = new MirroredTrajectory(getLvl2ToSideCargoshipMiddle());
+            lvl2ToFrontCargoShip = new MirroredTrajectory(getlvl2ToFrontCargoship());
+            lvl2ToFrontRocket = new MirroredTrajectory(getLvl2ToFrontRocket());
+            lvl2ToBackRocket = new MirroredTrajectory(getLvl2ToBackRocket()); 
+            backRocketBackup = new MirroredTrajectory(getBackRocketBackup());
             
         }
 

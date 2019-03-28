@@ -27,7 +27,7 @@ public class Hab1ToFrontCargoShip extends Command {
     // Reset robot state
     Robot.stateEstimator.reset(Timer.getFPGATimestamp(), TrajectoryGenerator.klevel1StartReverse);
     // Get generated trajectory
-    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontCargoship.trajectory));
+    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontCargoship.right));
     // Set the drive to follow the trajectory
     Robot.drive.setTrajectory(trajectory);
   }

@@ -27,7 +27,7 @@ public class BackRocketToFeeder extends Command {
     // Reset robot state
     Robot.stateEstimator.reset(Timer.getFPGATimestamp(), TrajectoryGenerator.kbackRocketPlacement);
     // Get generated trajectory
-    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().backRocketToFeeder.trajectory));
+    TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory = new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().backRocketToFeeder.right));
     // Set the drive to follow the trajectory
     Robot.drive.setTrajectory(trajectory);
   }

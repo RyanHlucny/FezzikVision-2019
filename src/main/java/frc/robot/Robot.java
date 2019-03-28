@@ -200,16 +200,16 @@ public class Robot extends TimedRobot {
           // Clear cancel button press
           m_oi.getSteeringJoystick().getRawButtonPressed(1);
           if (m_nextState == AutoState.PATH_1) {
-            m_pathSelector.getFirstPathCommand().start();
+            if (m_pathSelector.getFirstPathCommand() != null) m_pathSelector.getFirstPathCommand().start();
           }
           else if (m_nextState == AutoState.PATH_1_RETURN) {
-            m_pathSelector.getSecondPathCommand().start();
+            if (m_pathSelector.getSecondPathCommand() != null) m_pathSelector.getSecondPathCommand().start();
           }
           else if (m_nextState == AutoState.PATH_2) {
-            m_pathSelector.getThirdPathCommand().start();
+            if (m_pathSelector.getThirdPathCommand() != null) m_pathSelector.getThirdPathCommand().start();
           }
           else {
-            m_pathSelector.getFourthPathCommand().start();
+            if (m_pathSelector.getFourthPathCommand() != null) m_pathSelector.getFourthPathCommand().start();
           }
         }
         break;
@@ -220,6 +220,8 @@ public class Robot extends TimedRobot {
         if (m_oi.getSteeringJoystick().getRawButtonPressed(1)) {
           m_currentAutoState = AutoState.MANUAL_CONTROL;
           m_nextState = AutoState.PATH_1_RETURN;
+          // Clear resume button press
+          m_oi.getSteeringJoystick().getRawButtonPressed(2);
         }
         break;
 
@@ -229,6 +231,8 @@ public class Robot extends TimedRobot {
         if (m_oi.getSteeringJoystick().getRawButtonPressed(1)) {
           m_currentAutoState = AutoState.MANUAL_CONTROL;
           m_nextState = AutoState.PATH_2;
+          // Clear resume button press
+          m_oi.getSteeringJoystick().getRawButtonPressed(2);
         }
         break;
 
@@ -238,6 +242,8 @@ public class Robot extends TimedRobot {
         if (m_oi.getSteeringJoystick().getRawButtonPressed(1)) {
           m_currentAutoState = AutoState.MANUAL_CONTROL;
           m_nextState = AutoState.PATH_2_RETURN;
+          // Clear resume button press
+          m_oi.getSteeringJoystick().getRawButtonPressed(2);
         }
         break;
 
@@ -247,6 +253,8 @@ public class Robot extends TimedRobot {
         if (m_oi.getSteeringJoystick().getRawButtonPressed(1)) {
           m_currentAutoState = AutoState.MANUAL_CONTROL;
           m_nextState = AutoState.PATH_2_RETURN;
+          // Clear resume button press
+          m_oi.getSteeringJoystick().getRawButtonPressed(2);
         }
         break;
     }
