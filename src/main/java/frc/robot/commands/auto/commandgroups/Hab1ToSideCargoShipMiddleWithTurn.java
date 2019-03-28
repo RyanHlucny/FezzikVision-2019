@@ -12,11 +12,11 @@ import frc.robot.commands.auto.AutoPathCommand;
 import frc.robot.commands.drive.TurnByAngle;
 import frc.robot.paths.TrajectoryGenerator;
 
-public class RightFeederToFrontRocketWithTurn extends CommandGroup {
+public class Hab1ToSideCargoShipMiddleWithTurn extends CommandGroup {
   /**
    * Add your docs here.
    */
-  public RightFeederToFrontRocketWithTurn() {
+  public Hab1ToSideCargoShipMiddleWithTurn() {
     // Add Commands here:
     // e.g. addSequential(new Command1());
     // addSequential(new Command2());
@@ -33,7 +33,7 @@ public class RightFeederToFrontRocketWithTurn extends CommandGroup {
     // e.g. if Command1 requires chassis, and Command2 requires arm,
     // a CommandGroup containing them would require both the chassis and the
     // arm.
-    addSequential(new AutoPathCommand(TrajectoryGenerator.kfeederStationGrab, TrajectoryGenerator.getInstance().getTrajectorySet().rightFeederToFrontRocket));
-    addSequential(new TurnByAngle(180));
+    addSequential(new AutoPathCommand(TrajectoryGenerator.klevel1StartReverse, TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToSideCargoshipMiddle));
+    addSequential(new TurnByAngle(TrajectoryGenerator.kRightSideCargoShipTurn));
   }
 }

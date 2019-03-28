@@ -8,8 +8,9 @@
 package frc.robot.commands.auto.commandgroups;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
-import frc.robot.commands.auto.FrontRocketToFeeder;
+import frc.robot.commands.auto.AutoPathCommand;
 import frc.robot.commands.drive.TurnByAngle;
+import frc.robot.paths.TrajectoryGenerator;
 
 public class FrontRocketToFeederWithTurn extends CommandGroup {
   /**
@@ -32,7 +33,7 @@ public class FrontRocketToFeederWithTurn extends CommandGroup {
     // e.g. if Command1 requires chassis, and Command2 requires arm,
     // a CommandGroup containing them would require both the chassis and the
     // arm.
-    addSequential(new FrontRocketToFeeder());
+    addSequential(new AutoPathCommand(TrajectoryGenerator.kfrontRocketPlacement, TrajectoryGenerator.getInstance().getTrajectorySet().frontRocketToFeeder));
     addSequential(new TurnByAngle(180));
   }
 }

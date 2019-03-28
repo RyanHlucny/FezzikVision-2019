@@ -8,15 +8,17 @@
 package frc.robot.commands.auto.commandgroups;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
+import frc.lib.team254.geometry.Pose2d;
+import frc.lib.team254.geometry.Rotation2d;
 import frc.robot.commands.auto.AutoPathCommand;
 import frc.robot.commands.drive.TurnByAngle;
 import frc.robot.paths.TrajectoryGenerator;
 
-public class RightFeederToFrontRocketWithTurn extends CommandGroup {
+public class FrontCargoShipToRightFeederWithTurn extends CommandGroup {
   /**
    * Add your docs here.
    */
-  public RightFeederToFrontRocketWithTurn() {
+  public FrontCargoShipToRightFeederWithTurn() {
     // Add Commands here:
     // e.g. addSequential(new Command1());
     // addSequential(new Command2());
@@ -33,7 +35,7 @@ public class RightFeederToFrontRocketWithTurn extends CommandGroup {
     // e.g. if Command1 requires chassis, and Command2 requires arm,
     // a CommandGroup containing them would require both the chassis and the
     // arm.
-    addSequential(new AutoPathCommand(TrajectoryGenerator.kfeederStationGrab, TrajectoryGenerator.getInstance().getTrajectorySet().rightFeederToFrontRocket));
+    addSequential(new AutoPathCommand(new Pose2d(202, -10, Rotation2d.fromDegrees(180)), TrajectoryGenerator.getInstance().getTrajectorySet().frontCargoShipToRightFeeder));
     addSequential(new TurnByAngle(180));
   }
 }

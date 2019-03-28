@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import frc.robot.Robot;
 import frc.robot.planners.DriveMotionPlanner;
 import frc.lib.team254.geometry.Pose2d;
 import frc.lib.team254.geometry.Pose2dWithCurvature;
@@ -20,10 +21,30 @@ public class TrajectoryGenerator {
     private static final double kMaxCentripetalAccel = 100.0;
     private static final double kMaxVoltage = 11.5;
 
+    // Turning angle fields
+    public static final double kRightSideCargoShipTurn = -90;
+    public static final double kLeftSideCargoShipTurn = -kRightSideCargoShipTurn;
+    public static final double kRightBackRocketTurn = -58;
+    public static final double kLeftBackRocketTurn = -kRightBackRocketTurn;
+    public static final double kRightFrontCargoShipTurn = -90;
+    public static final double kLeftFrontCargoShipTurn = -kRightFrontCargoShipTurn;
+
     // Private fields
     private static TrajectoryGenerator mInstance = new TrajectoryGenerator();
     private TrajectorySet mTrajectorySet = null;
     private DriveMotionPlanner mMotionPlanner;
+
+    // Choosable parameters from dashboard
+    private int startPosition = Robot.startPosition;
+
+    public boolean isStartOnLeft() {
+        boolean isStartOnLeft;
+        if (startPosition == 1 || startPosition == 4)
+            isStartOnLeft = true;
+        else
+            isStartOnLeft = false;
+        return isStartOnLeft;
+    }
 
     private TrajectoryGenerator() {
         mMotionPlanner = new DriveMotionPlanner();
@@ -81,9 +102,9 @@ public class TrajectoryGenerator {
     // +x is towards the center of the field.
     // +y is to the left.
     // ALL POSES DEFINED FOR THE CASE THAT ROBOT STARTS ON RIGHT! (mirrored about +x axis for LEFT)
-    public static final Pose2d klevel2StartReverse = new Pose2d(22.0, -43.0, Rotation2d.fromDegrees(180.0)); // 30 was 22
+    public static final Pose2d klevel2StartReverse = new Pose2d(22.0, -43.0, Rotation2d.fromDegrees(180.0));
     public static final Pose2d klevel1StartReverse = new Pose2d(67.0, -43.0, Rotation2d.fromDegrees(180.0));
-    public static final Pose2d klevel2StartForward = new Pose2d(30.0, -43.0, Rotation2d.fromDegrees(0.0)); // 30 was 22
+    public static final Pose2d klevel2StartForward = new Pose2d(22.0, -43.0, Rotation2d.fromDegrees(0.0));
     public static final Pose2d klevel1StartForward = new Pose2d(67.0, -43.0, Rotation2d.fromDegrees(0.0));
     public static final Pose2d kleaveHabRight = new Pose2d(110.0, -43.0, Rotation2d.fromDegrees(180.0));
     public static final Pose2d kleaveHabMiddle = new Pose2d(110.0, 0.0, Rotation2d.fromDegrees(180.0));
@@ -174,7 +195,6 @@ public class TrajectoryGenerator {
             lvl2ToFrontRocket = new TrajectoryInstance(getLvl2ToFrontRocket());
             lvl2ToBackRocket = new TrajectoryInstance(getLvl2ToBackRocket()); 
             backRocketBackup = new TrajectoryInstance(getBackRocketBackup());
-            
         }
 
         private Trajectory<TimedState<Pose2dWithCurvature>> getLvl1ToFrontRocket() {

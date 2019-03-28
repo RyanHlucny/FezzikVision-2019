@@ -57,9 +57,13 @@ public class Robot extends TimedRobot {
   private static PathCommandSelector m_pathSelector;
 
   // Choosers for selecting robot starting position and paths to run
-  SendableChooser<Integer> m_startPositionChooser = new SendableChooser<>();
+  public SendableChooser<Integer> m_startPositionChooser = new SendableChooser<>();
   SendableChooser<Integer> m_path1Chooser = new SendableChooser<>();
   SendableChooser<Integer> m_path2Chooser = new SendableChooser<>();
+
+  public static int startPosition;
+  public static int path1;
+  public static int path2;
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -117,6 +121,11 @@ public class Robot extends TimedRobot {
 
     }).start(); */
 
+    // Get choosable parameters from the dashboard
+    startPosition = m_startPositionChooser.getSelected();
+    path1 = m_path1Chooser.getSelected();
+    path2 = m_path2Chooser.getSelected();
+
     // Generate paths
     TrajectoryGenerator.getInstance().generateTrajectories();
   }
@@ -167,11 +176,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    // Get choosable parameters from the dashboard
-    int startPosition = m_startPositionChooser.getSelected();
-    int path1 = m_path1Chooser.getSelected();
-    int path2 = m_path2Chooser.getSelected();
-
     // Construct path selector object
     m_pathSelector = new PathCommandSelector(startPosition, path1, path2);
 
@@ -199,17 +203,19 @@ public class Robot extends TimedRobot {
           m_currentAutoState = m_nextState;
           // Clear cancel button press
           m_oi.getSteeringJoystick().getRawButtonPressed(1);
-          if (m_nextState == AutoState.PATH_1) {
+          if (m_nextState == AutoState.PATH_1 && m_pathSelector.getFirstPathCommand() != null) {
             m_pathSelector.getFirstPathCommand().start();
           }
-          else if (m_nextState == AutoState.PATH_1_RETURN) {
+          else if (m_nextState == AutoState.PATH_1_RETURN && m_pathSelector.getSecondPathCommand() != null) {
             m_pathSelector.getSecondPathCommand().start();
           }
-          else if (m_nextState == AutoState.PATH_2) {
+          else if (m_nextState == AutoState.PATH_2 && m_pathSelector.getThirdPathCommand() != null) {
             m_pathSelector.getThirdPathCommand().start();
           }
           else {
-            m_pathSelector.getFourthPathCommand().start();
+            if (m_pathSelector.getFourthPathCommand() != null) {
+              m_pathSelector.getFourthPathCommand().start();
+            }
           }
         }
         break;
