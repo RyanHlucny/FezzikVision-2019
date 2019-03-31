@@ -41,6 +41,7 @@ public class Robot extends TimedRobot {
   // This must be instantiated after the drive subsystem
   public static RobotStateEstimator stateEstimator = new RobotStateEstimator();
 
+  // Operator Interface to link controllers to functions on the robot
   public static OI m_oi = new OI();
 
   // Helper objects
