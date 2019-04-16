@@ -8,7 +8,9 @@
 package frc.robot.commands.auto.commandgroups;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
-import frc.robot.commands.auto.AutoPathCommand;
+import frc.lib.team254.trajectory.TimedView;
+import frc.lib.team254.trajectory.TrajectoryIterator;
+import frc.robot.commands.auto.DriveTrajectory;
 import frc.robot.commands.drive.TurnByAngle;
 import frc.robot.paths.TrajectoryGenerator;
 
@@ -16,7 +18,7 @@ public class RightFeederToBackRocketWithTurn extends CommandGroup {
   /**
    * Add your docs here.
    */
-  public RightFeederToBackRocketWithTurn() {
+  public RightFeederToBackRocketWithTurn(boolean isRight) {
     // Add Commands here:
     // e.g. addSequential(new Command1());
     // addSequential(new Command2());
@@ -33,7 +35,13 @@ public class RightFeederToBackRocketWithTurn extends CommandGroup {
     // e.g. if Command1 requires chassis, and Command2 requires arm,
     // a CommandGroup containing them would require both the chassis and the
     // arm.
-    addSequential(new AutoPathCommand(TrajectoryGenerator.kfeederStationGrab, TrajectoryGenerator.getInstance().getTrajectorySet().rightFeederToBackRocket));
-    addSequential(new TurnByAngle(TrajectoryGenerator.kRightBackRocketTurn));
+    if (isRight) {
+      addSequential(new DriveTrajectory(TrajectoryGenerator.kfeederStationGrab, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().rightFeederToBackRocket.right))));
+      addSequential(new TurnByAngle(TrajectoryGenerator.kRightBackRocketTurn));
+    }
+    else {
+      addSequential(new DriveTrajectory(TrajectoryGenerator.kfeederStationGrab, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().rightFeederToBackRocket.left))));
+      addSequential(new TurnByAngle(-TrajectoryGenerator.kRightBackRocketTurn));
+    }
   }
 }

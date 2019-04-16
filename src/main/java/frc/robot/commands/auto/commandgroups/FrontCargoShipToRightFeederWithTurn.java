@@ -10,7 +10,9 @@ package frc.robot.commands.auto.commandgroups;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import frc.lib.team254.geometry.Pose2d;
 import frc.lib.team254.geometry.Rotation2d;
-import frc.robot.commands.auto.AutoPathCommand;
+import frc.lib.team254.trajectory.TimedView;
+import frc.lib.team254.trajectory.TrajectoryIterator;
+import frc.robot.commands.auto.DriveTrajectory;
 import frc.robot.commands.drive.TurnByAngle;
 import frc.robot.paths.TrajectoryGenerator;
 
@@ -18,7 +20,7 @@ public class FrontCargoShipToRightFeederWithTurn extends CommandGroup {
   /**
    * Add your docs here.
    */
-  public FrontCargoShipToRightFeederWithTurn() {
+  public FrontCargoShipToRightFeederWithTurn(boolean isRight) {
     // Add Commands here:
     // e.g. addSequential(new Command1());
     // addSequential(new Command2());
@@ -35,7 +37,13 @@ public class FrontCargoShipToRightFeederWithTurn extends CommandGroup {
     // e.g. if Command1 requires chassis, and Command2 requires arm,
     // a CommandGroup containing them would require both the chassis and the
     // arm.
-    addSequential(new AutoPathCommand(new Pose2d(202, -10, Rotation2d.fromDegrees(180)), TrajectoryGenerator.getInstance().getTrajectorySet().frontCargoShipToRightFeeder));
-    addSequential(new TurnByAngle(180));
+    if (isRight) {
+      addSequential(new DriveTrajectory(new Pose2d(202, -10, Rotation2d.fromDegrees(180)), new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().frontCargoShipToRightFeeder.right))));
+      addSequential(new TurnByAngle(180));
+    }
+    else {
+      addSequential(new DriveTrajectory(new Pose2d(202, -10, Rotation2d.fromDegrees(180)), new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().frontCargoShipToRightFeeder.left))));
+      addSequential(new TurnByAngle(-180));
+    }
   }
 }

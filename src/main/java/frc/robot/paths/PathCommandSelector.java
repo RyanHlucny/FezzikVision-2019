@@ -3,7 +3,8 @@ package frc.robot.paths;
 import edu.wpi.first.wpilibj.command.Command;
 import frc.lib.team254.geometry.Pose2d;
 import frc.lib.team254.geometry.Rotation2d;
-import frc.robot.commands.auto.AutoPathCommand;
+import frc.lib.team254.trajectory.TimedView;
+import frc.lib.team254.trajectory.TrajectoryIterator;
 import frc.robot.commands.auto.DriveTrajectory;
 import frc.robot.commands.auto.commandgroups.BackRocketToFeederWithTurn;
 import frc.robot.commands.auto.commandgroups.FrontCargoShipToRightFeederWithTurn;
@@ -58,45 +59,45 @@ public class PathCommandSelector {
         // Destination 1:
         if (dest1 == 0) {
           // front rocket
-          m_firstCommand = new DriveTrajectory(new Pose2d(67, -43, Rotation2d.fromDegrees(180)), ); // Hab1ToFrontRocket
-          m_secondCommand = new FrontRocketToFeederWithTurn();
+          m_firstCommand = new DriveTrajectory(new Pose2d(67, -43, Rotation2d.fromDegrees(180)), new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontRocket.right))); // Hab1ToFrontRocket
+          m_secondCommand = new FrontRocketToFeederWithTurn(true);
         }
         else if (dest1 == 1) {
           // back rocket
-          m_firstCommand = new AutoPathCommand(new Pose2d(67, -43, Rotation2d.fromDegrees(0)), TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToBackRocket); // Hab1ToBackRocket
-          m_secondCommand = new BackRocketToFeederWithTurn();
+          m_firstCommand = new DriveTrajectory(new Pose2d(67, -43, Rotation2d.fromDegrees(0)), new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToBackRocket.right))); // Hab1ToBackRocket
+          m_secondCommand = new BackRocketToFeederWithTurn(true);
         }
         else if (dest1 == 2) {
           // front cargo ship
-          m_firstCommand = new AutoPathCommand(TrajectoryGenerator.klevel1StartReverse, TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontCargoship); //Hab1ToFrontCargoShip
-          m_secondCommand = new FrontCargoShipToRightFeederWithTurn();
+          m_firstCommand = new DriveTrajectory(TrajectoryGenerator.klevel1StartReverse, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontCargoship.right))); //Hab1ToFrontCargoShip
+          m_secondCommand = new FrontCargoShipToRightFeederWithTurn(true);
         }
         else {
           // side cargo ship
-          m_firstCommand = new Hab1ToSideCargoShipMiddleWithTurn();
-          m_secondCommand = new SideCargoShipToRightFeederWithTurn();
+          m_firstCommand = new Hab1ToSideCargoShipMiddleWithTurn(true);
+          m_secondCommand = new SideCargoShipToRightFeederWithTurn(true);
         }
 
         // Destination2:
         if (dest2 == 0) {
           // front rocket
-          m_thirdCommand = new RightFeederToFrontRocketWithTurn();
-          m_fourthCommand = new FrontRocketToFeederWithTurn();
+          m_thirdCommand = new RightFeederToFrontRocketWithTurn(true);
+          m_fourthCommand = new FrontRocketToFeederWithTurn(true);
         }
         else if (dest2 == 1) {
           // back rocket
-          m_thirdCommand = new RightFeederToBackRocketWithTurn();
-          m_fourthCommand = new BackRocketToFeederWithTurn();
+          m_thirdCommand = new RightFeederToBackRocketWithTurn(true);
+          m_fourthCommand = new BackRocketToFeederWithTurn(true);
         }
         else if (dest2 == 2) {
           // front cargo ship
-          m_thirdCommand = new RightFeederToFrontCargoShipWithTurn();
-          m_fourthCommand = new FrontCargoShipToRightFeederWithTurn();
+          m_thirdCommand = new RightFeederToFrontCargoShipWithTurn(true);
+          m_fourthCommand = new FrontCargoShipToRightFeederWithTurn(true);
         }
         else {
           // side cargo ship
-          m_thirdCommand = new RightFeederToSideCargoShipLeftWithTurn();
-          m_fourthCommand = new SideCargoShipToRightFeederWithTurn();
+          m_thirdCommand = new RightFeederToSideCargoShipLeftWithTurn(true);
+          m_fourthCommand = new SideCargoShipToRightFeederWithTurn(true);
         }
       break;
 
@@ -105,29 +106,45 @@ public class PathCommandSelector {
         // Destination 1:
         if (dest1 == 0) {
           // front rocket
+          m_firstCommand = new DriveTrajectory(new Pose2d(67, -43, Rotation2d.fromDegrees(180)), new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontRocket.left))); // Hab1ToFrontRocket
+          m_secondCommand = new FrontRocketToFeederWithTurn(false);
         }
         else if (dest1 == 1) {
           // back rocket
+          m_firstCommand = new DriveTrajectory(new Pose2d(67, -43, Rotation2d.fromDegrees(0)), new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToBackRocket.left))); // Hab1ToBackRocket
+          m_secondCommand = new BackRocketToFeederWithTurn(false);
         }
         else if (dest1 == 2) {
           // front cargo ship
+          m_firstCommand = new DriveTrajectory(TrajectoryGenerator.klevel1StartReverse, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl1ToFrontCargoship.left))); //Hab1ToFrontCargoShip
+          m_secondCommand = new FrontCargoShipToRightFeederWithTurn(false);
         }
         else {
           // side cargo ship
+          m_firstCommand = new Hab1ToSideCargoShipMiddleWithTurn(false);
+          m_secondCommand = new SideCargoShipToRightFeederWithTurn(false);
         }
 
         // Destination2:
         if (dest2 == 0) {
           // front rocket
+          m_thirdCommand = new RightFeederToFrontRocketWithTurn(false);
+          m_fourthCommand = new FrontRocketToFeederWithTurn(false);
         }
         else if (dest2 == 1) {
           // back rocket
+          m_thirdCommand = new RightFeederToBackRocketWithTurn(false);
+          m_fourthCommand = new BackRocketToFeederWithTurn(false);
         }
         else if (dest2 == 2) {
           // front cargo ship
+          m_thirdCommand = new RightFeederToFrontCargoShipWithTurn(false);
+          m_fourthCommand = new FrontCargoShipToRightFeederWithTurn(false);
         }
         else {
           // side cargo ship
+          m_thirdCommand = new RightFeederToSideCargoShipLeftWithTurn(false);
+          m_fourthCommand = new SideCargoShipToRightFeederWithTurn(false);
         }
       break;
 
@@ -142,8 +159,8 @@ public class PathCommandSelector {
         }
         else if (dest1 == 2) {
           // front cargo ship
-          m_firstCommand = new AutoPathCommand(TrajectoryGenerator.klevel1StartMiddle, TrajectoryGenerator.getInstance().getTrajectorySet().midToFrontCargoship);
-          m_secondCommand = new FrontCargoShipToRightFeederWithTurn();
+          m_firstCommand = new DriveTrajectory(TrajectoryGenerator.klevel1StartMiddle, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().midToFrontCargoship.right)));
+          m_secondCommand = new FrontCargoShipToRightFeederWithTurn(true);
         }
         else {
           // side cargo ship
@@ -152,23 +169,23 @@ public class PathCommandSelector {
         // Destination2:
         if (dest2 == 0) {
           // front rocket
-          m_thirdCommand = new RightFeederToFrontRocketWithTurn();
-          m_fourthCommand = new FrontRocketToFeederWithTurn();
+          m_thirdCommand = new RightFeederToFrontRocketWithTurn(true);
+          m_fourthCommand = new FrontRocketToFeederWithTurn(true);
         }
         else if (dest2 == 1) {
           // back rocket
-          m_thirdCommand = new RightFeederToBackRocketWithTurn();
-          m_fourthCommand = new BackRocketToFeederWithTurn();
+          m_thirdCommand = new RightFeederToBackRocketWithTurn(true);
+          m_fourthCommand = new BackRocketToFeederWithTurn(true);
         }
         else if (dest2 == 2) {
           // front cargo ship
-          m_thirdCommand = new RightFeederToFrontCargoShipWithTurn();
-          m_fourthCommand = new FrontCargoShipToRightFeederWithTurn();
+          m_thirdCommand = new RightFeederToFrontCargoShipWithTurn(true);
+          m_fourthCommand = new FrontCargoShipToRightFeederWithTurn(true);
         }
         else {
           // side cargo ship
-          m_thirdCommand = new RightFeederToSideCargoShipLeftWithTurn();
-          m_fourthCommand = new SideCargoShipToRightFeederWithTurn();
+          m_thirdCommand = new RightFeederToSideCargoShipLeftWithTurn(true);
+          m_fourthCommand = new SideCargoShipToRightFeederWithTurn(true);
         }
       break;
 
@@ -177,45 +194,45 @@ public class PathCommandSelector {
       // Destination 1:
       if (dest1 == 0) {
         // front rocket
-        m_firstCommand = new AutoPathCommand(TrajectoryGenerator.klevel2StartReverse, TrajectoryGenerator.getInstance().getTrajectorySet().lvl2ToFrontRocket);
-        m_secondCommand = new FrontRocketToFeederWithTurn();
+        m_firstCommand = new DriveTrajectory(TrajectoryGenerator.klevel2StartReverse, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl2ToFrontRocket.right)));
+        m_secondCommand = new FrontRocketToFeederWithTurn(true);
       }
       else if (dest1 == 1) {
         // back rocket
-        m_firstCommand = new Hab2ToBackRocketWithTurn();
-        m_secondCommand = new BackRocketToFeederWithTurn();
+        m_firstCommand = new Hab2ToBackRocketWithTurn(true);
+        m_secondCommand = new BackRocketToFeederWithTurn(true);
       }
       else if (dest1 == 2) {
         // front cargo ship
-        m_firstCommand = new AutoPathCommand(TrajectoryGenerator.klevel2StartReverse, TrajectoryGenerator.getInstance().getTrajectorySet().lvl2ToFrontCargoShip);
-        m_secondCommand = new FrontCargoShipToRightFeederWithTurn();
+        m_firstCommand = new DriveTrajectory(TrajectoryGenerator.klevel2StartReverse, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl2ToFrontCargoShip.right)));
+        m_secondCommand = new FrontCargoShipToRightFeederWithTurn(true);
       }
       else {
         // side cargo ship
-        m_firstCommand = new Hab2ToSideCargoShipMiddleWithTurn();
-        m_secondCommand = new SideCargoShipToRightFeederWithTurn();
+        m_firstCommand = new Hab2ToSideCargoShipMiddleWithTurn(true);
+        m_secondCommand = new SideCargoShipToRightFeederWithTurn(true);
       }
 
       // Destination2:
       if (dest2 == 0) {
         // front rocket
-        m_thirdCommand = new RightFeederToFrontRocketWithTurn();
-        m_fourthCommand = new FrontRocketToFeederWithTurn();
+        m_thirdCommand = new RightFeederToFrontRocketWithTurn(true);
+        m_fourthCommand = new FrontRocketToFeederWithTurn(true);
       }
       else if (dest2 == 1) {
         // back rocket
-        m_thirdCommand = new RightFeederToBackRocketWithTurn();
-        m_fourthCommand = new BackRocketToFeederWithTurn();
+        m_thirdCommand = new RightFeederToBackRocketWithTurn(true);
+        m_fourthCommand = new BackRocketToFeederWithTurn(true);
       }
       else if (dest2 == 2) {
         // front cargo ship
-        m_thirdCommand = new RightFeederToFrontCargoShipWithTurn();
-        m_fourthCommand = new FrontCargoShipToRightFeederWithTurn();
+        m_thirdCommand = new RightFeederToFrontCargoShipWithTurn(true);
+        m_fourthCommand = new FrontCargoShipToRightFeederWithTurn(true);
       }
       else {
         // side cargo ship
-        m_thirdCommand = new RightFeederToSideCargoShipLeftWithTurn();
-        m_fourthCommand = new SideCargoShipToRightFeederWithTurn();
+        m_thirdCommand = new RightFeederToSideCargoShipLeftWithTurn(true);
+        m_fourthCommand = new SideCargoShipToRightFeederWithTurn(true);
       }
       break;
 
@@ -224,29 +241,45 @@ public class PathCommandSelector {
         // Destination 1:
         if (dest1 == 0) {
           // front rocket
+          m_firstCommand = new DriveTrajectory(TrajectoryGenerator.klevel2StartReverse, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl2ToFrontRocket.left)));
+          m_secondCommand = new FrontRocketToFeederWithTurn(false);
         }
         else if (dest1 == 1) {
           // back rocket
+          m_firstCommand = new Hab2ToBackRocketWithTurn(false);
+          m_secondCommand = new BackRocketToFeederWithTurn(false);
         }
         else if (dest1 == 2) {
           // front cargo ship
+          m_firstCommand = new DriveTrajectory(TrajectoryGenerator.klevel2StartReverse, new TrajectoryIterator<>(new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().lvl2ToFrontCargoShip.left)));
+          m_secondCommand = new FrontCargoShipToRightFeederWithTurn(false);
         }
         else {
           // side cargo ship
+          m_firstCommand = new Hab2ToSideCargoShipMiddleWithTurn(false);
+          m_secondCommand = new SideCargoShipToRightFeederWithTurn(false);
         }
 
         // Destination2:
         if (dest2 == 0) {
           // front rocket
+          m_thirdCommand = new RightFeederToFrontRocketWithTurn(false);
+          m_fourthCommand = new FrontRocketToFeederWithTurn(false);
         }
         else if (dest2 == 1) {
           // back rocket
+          m_thirdCommand = new RightFeederToBackRocketWithTurn(false);
+          m_fourthCommand = new BackRocketToFeederWithTurn(false);
         }
         else if (dest2 == 2) {
           // front cargo ship
+          m_thirdCommand = new RightFeederToFrontCargoShipWithTurn(false);
+          m_fourthCommand = new FrontCargoShipToRightFeederWithTurn(false);
         }
         else {
           // side cargo ship
+          m_thirdCommand = new RightFeederToSideCargoShipLeftWithTurn(false);
+          m_fourthCommand = new SideCargoShipToRightFeederWithTurn(false);
         }
       break;
 

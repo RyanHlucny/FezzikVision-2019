@@ -8,15 +8,17 @@
 package frc.robot.commands.auto.commandgroups;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
-import frc.robot.commands.auto.AutoPathCommand;
+import frc.lib.team254.trajectory.TimedView;
+import frc.lib.team254.trajectory.TrajectoryIterator;
+import frc.robot.commands.auto.DriveTrajectory;
 import frc.robot.commands.drive.TurnByAngle;
 import frc.robot.paths.TrajectoryGenerator;
 
 public class BackRocketToFeederWithTurn extends CommandGroup {
   /**
-   * Add your docs here.
+   * @param boolean true if path is for the Right side
    */
-  public BackRocketToFeederWithTurn() {
+  public BackRocketToFeederWithTurn(boolean isRight) {
     // Add Commands here:
     // e.g. addSequential(new Command1());
     // addSequential(new Command2());
@@ -33,8 +35,19 @@ public class BackRocketToFeederWithTurn extends CommandGroup {
     // e.g. if Command1 requires chassis, and Command2 requires arm,
     // a CommandGroup containing them would require both the chassis and the
     // arm.
-    addSequential(new AutoPathCommand(TrajectoryGenerator.kbackRocketPlacement, TrajectoryGenerator.getInstance().getTrajectorySet().backRocketBackup));
-    addSequential(new TurnByAngle(TrajectoryGenerator.kLeftBackRocketTurn));
-    addSequential(new AutoPathCommand(TrajectoryGenerator.kbackRocketPlacement, TrajectoryGenerator.getInstance().getTrajectorySet().backRocketToFeeder));
+    if (isRight) {
+      addSequential(new DriveTrajectory(TrajectoryGenerator.kbackRocketPlacement, new TrajectoryIterator<>(
+          new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().backRocketBackup.right))));
+      addSequential(new TurnByAngle(TrajectoryGenerator.kLeftBackRocketTurn));
+      addSequential(new DriveTrajectory(TrajectoryGenerator.kbackRocketPlacement, new TrajectoryIterator<>(
+          new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().backRocketToFeeder.right))));
+    }
+    else {
+      addSequential(new DriveTrajectory(TrajectoryGenerator.kbackRocketPlacement, new TrajectoryIterator<>(
+          new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().backRocketBackup.left))));
+      addSequential(new TurnByAngle(-TrajectoryGenerator.kLeftBackRocketTurn));
+      addSequential(new DriveTrajectory(TrajectoryGenerator.kbackRocketPlacement, new TrajectoryIterator<>(
+          new TimedView<>(TrajectoryGenerator.getInstance().getTrajectorySet().backRocketToFeeder.left))));
+    }
   }
 }
